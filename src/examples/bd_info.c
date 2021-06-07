@@ -17,10 +17,16 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include "bdnav/meta_data.h"
 #include "bluray.h"

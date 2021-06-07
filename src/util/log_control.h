@@ -18,6 +18,22 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#if defined(_WIN32)
+#    if defined(__GNUC__)
+#        define BD_PUBLIC  __attribute__((dllexport))
+#        define BD_PRIVATE
+#    else
+#        define BD_PUBLIC  __declspec(dllexport)
+#        define BD_PRIVATE
+#    endif
+#elif defined(__GNUC__) && __GNUC__ >= 4
+#    define BD_PUBLIC  __attribute__((visibility("default")))
+#    define BD_PRIVATE __attribute__((visibility("hidden")))
+#else
+#    define BD_PUBLIC
+#    define BD_PRIVATE
+#endif
+
 #ifndef BD_LOG_CONTROL_H_
 #define BD_LOG_CONTROL_H_
 
@@ -57,10 +73,10 @@ typedef void (*BD_LOG_FUNC)(const char *);
  *
  */
 
-void bd_set_debug_handler(BD_LOG_FUNC);
+BD_PUBLIC void bd_set_debug_handler(BD_LOG_FUNC);
 
-void bd_set_debug_mask(uint32_t mask);
-uint32_t bd_get_debug_mask(void);
+BD_PUBLIC void bd_set_debug_mask(uint32_t mask);
+BD_PUBLIC uint32_t bd_get_debug_mask(void);
 
 #ifdef __cplusplus
 }

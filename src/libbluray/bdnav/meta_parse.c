@@ -46,6 +46,11 @@
 #include <libxml/tree.h>
 #endif
 
+#ifdef _MSC_VER 
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
+#endif
+
 #define DEFAULT_LANGUAGE  "eng"
 
 

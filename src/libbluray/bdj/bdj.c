@@ -1,4 +1,4 @@
-/*
+﻿/*
  * This file is part of libbluray
  * Copyright (C) 2010  William Hahne
  * Copyright (C) 2012-2019  Petri Hintukainen <phintuka@users.sourceforge.net>

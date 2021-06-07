@@ -18,9 +18,18 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#if !HAVE_OPTIND
+#include "getopt.h"
+#endif
 #include <inttypes.h>
 
 #include "bluray.h"

@@ -17,13 +17,26 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/stat.h>
+#if HAVE_DIRENT_H
 #include <dirent.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <string.h>
+#if HAVE_LIBGEN_H
 #include <libgen.h>
+#endif
+#if !HAVE_OPTIND
+#include "getopt.h"
+#endif
 
 #include "bdnav/mpls_data.h"
 #include "bluray.h"
@@ -34,6 +47,19 @@
 #ifdef _WIN32
 # define DIR_SEP "\\"
 # define PLAYLIST_DIR "\\BDMV\\PLAYLIST"
+#include<windows.h>
+unsigned short S_ISDIR(unsigned short st_mode) {
+    return st_mode & _S_IFDIR;
+}
+unsigned short S_ISREG(unsigned short st_mode) {
+    return st_mode & _S_IFREG;
+}
+char *basename(char *path) {
+    char fname[260];
+    char fext[260];
+    _splitpath(path, NULL, NULL, fname, fext);
+    return strcat(fname, fext);
+}
 #else
 # define DIR_SEP "/"
 # define PLAYLIST_DIR "/BDMV/PLAYLIST"
@@ -78,6 +104,7 @@ const VALUE_MAP mark_type_map[] = {
 static char *
 _mk_path(const char *base, const char *sub)
 {
+#if HAVE_DIRENT_H
     size_t n1 = strlen(base);
     size_t n2 = strlen(sub);
     char *result = (char*)malloc(n1 + n2 + strlen(DIR_SEP) + 1);
@@ -87,6 +114,20 @@ _mk_path(const char *base, const char *sub)
         strcat(result, sub);
     }
     return result;
+#else
+	size_t n1 = strlen(base);
+	size_t n2 = strlen(sub);
+	char *result = (char*)malloc(n1 + n2 + strlen(DIR_SEP) + 2);
+	if (result) {
+		strcpy(result, base);
+		if (base[n1 - 1] != '\\' && base[n1 - 1] != '/') {
+			strcpy(result, "\\");
+		}
+		strcat(result, sub);
+		strcat(result, DIR_SEP);
+	}
+	return result;
+#endif
 }
 
 static void
@@ -644,7 +685,11 @@ main(int argc, char *argv[])
     MPLS_PL *pl_list[1000];
     struct stat st;
     char *path = NULL;
+#if HAVE_DIRENT_H
     DIR *dir = NULL;
+#else
+    WIN32_FIND_DATAA dir;
+#endif
 
     do {
         opt = getopt(argc, argv, OPTS);
@@ -710,10 +755,20 @@ main(int argc, char *argv[])
 
     for (pl_ii = 0, ii = optind; pl_ii < 1000 && ii < argc; ii++) {
 
+#if !HAVE_DIRENT_H
+		if (strlen(argv[ii]) == 2 && argv[ii][1] == ':') {
+			strcat(argv[ii], "\\");
+		}
+#endif
+
         if (stat(argv[ii], &st)) {
             continue;
         }
+#if HAVE_DIRENT_H
         dir = NULL;
+#else
+        HANDLE result = NULL;
+#endif
         if (S_ISDIR(st.st_mode)) {
 
             printf("Directory: %s:\n", argv[ii]);
@@ -723,19 +778,33 @@ main(int argc, char *argv[])
                 bd_free_mpls(pl_list[jj]);
             }
             pl_ii = 0;
-
             path = _mk_path(argv[ii], PLAYLIST_DIR);
             if (path == NULL) {
                 fprintf(stderr, "Failed to find playlist path: %s\n", argv[ii]);
                 continue;
             }
+#if HAVE_DIRENT_H
             dir = opendir(path);
             if (dir == NULL) {
                 fprintf(stderr, "Failed to open dir: %s\n", path);
                 free(path);
                 continue;
             }
+#else
+			char* path2 = (char*)malloc(strlen(path) + strlen("*.mpls") + 1);
+			strcpy(path2, path);
+			strcat(path2, "*.mpls");
+            result = FindFirstFileA(path2, &dir);
+            if (result == INVALID_HANDLE_VALUE) {
+                fprintf(stderr, "Failed to find playlist path: %s\n", argv[ii]);
+                free(path);
+				free(path2);
+                continue;
+            }
+			free(path2);
+#endif
         }
+#if HAVE_DIRENT_H
         if (dir != NULL) {
             char **dirlist = (char**)calloc(10001, sizeof(char*));
             if (!dirlist) {
@@ -775,6 +844,29 @@ main(int argc, char *argv[])
             free(path);
             closedir(dir);
             dir = NULL;
+#else
+        if (result != NULL) {
+            do {
+				char* name = (char*)malloc(strlen(path) + strlen(dir.cFileName) + 1);
+				strcpy(name, path);
+				strcat(name, dir.cFileName);
+                if (stat(name, &st)) {
+					free(name);
+                    continue;
+                }
+                if (!S_ISREG(st.st_mode)) {
+					free(name);
+                    continue;
+                }
+                pl = _process_file(name, pl_list, pl_ii);
+                if (pl != NULL) {
+                    pl_list[pl_ii++] = pl;
+                }
+				free(name);
+            } while (FindNextFileA(result, &dir));
+            FindClose(result);
+			free(path);
+#endif
         } else {
             pl = _process_file(argv[ii], pl_list, pl_ii);
             if (pl != NULL) {

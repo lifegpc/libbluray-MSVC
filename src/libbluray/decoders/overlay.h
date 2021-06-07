@@ -17,6 +17,22 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#if defined(_WIN32)
+#    if defined(__GNUC__)
+#        define BD_PUBLIC  __attribute__((dllexport))
+#        define BD_PRIVATE
+#    else
+#        define BD_PUBLIC  __declspec(dllexport)
+#        define BD_PRIVATE
+#    endif
+#elif defined(__GNUC__) && __GNUC__ >= 4
+#    define BD_PUBLIC  __attribute__((visibility("default")))
+#    define BD_PRIVATE __attribute__((visibility("hidden")))
+#else
+#    define BD_PUBLIC
+#    define BD_PRIVATE
+#endif
+
 #ifndef BD_OVERLAY_H_
 #define BD_OVERLAY_H_
 
@@ -88,11 +104,11 @@ typedef struct bd_overlay_s {
   it needs to use bd_refcnt_inc() and bd_refcnt_dec().
 */
 
-const void *bd_refcnt_inc(const void *); /* return object or NULL on invalid object */
-void bd_refcnt_dec(const void *);
+BD_PUBLIC const void *bd_refcnt_inc(const void *); /* return object or NULL on invalid object */
+BD_PUBLIC void bd_refcnt_dec(const void *);
 
 #if 0
-BD_OVERLAY *bd_overlay_copy(const BD_OVERLAY *src)
+BD_PUBLIC BD_OVERLAY *bd_overlay_copy(const BD_OVERLAY *src)
 {
     BD_OVERLAY *ov = malloc(sizeof(*ov));
     memcpy(ov, src, sizeof(*ov));
@@ -106,7 +122,7 @@ BD_OVERLAY *bd_overlay_copy(const BD_OVERLAY *src)
     return ov;
 }
 
-void bd_overlay_free(BD_OVERLAY **pov)
+BD_PUBLIC void bd_overlay_free(BD_OVERLAY **pov)
 {
     if (pov && *pov) {
         BD_OVERLAY *ov = *pov;

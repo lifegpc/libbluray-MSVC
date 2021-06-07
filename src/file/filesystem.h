@@ -18,6 +18,22 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#if defined(_WIN32)
+#    if defined(__GNUC__)
+#        define BD_PUBLIC  __attribute__((dllexport))
+#        define BD_PRIVATE
+#    else
+#        define BD_PUBLIC  __declspec(dllexport)
+#        define BD_PRIVATE
+#    endif
+#elif defined(__GNUC__) && __GNUC__ >= 4
+#    define BD_PUBLIC  __attribute__((visibility("default")))
+#    define BD_PRIVATE __attribute__((visibility("hidden")))
+#else
+#    define BD_PUBLIC
+#    define BD_PRIVATE
+#endif
+
 #ifndef BD_FILESYSTEM_H_
 #define BD_FILESYSTEM_H_
 
@@ -72,7 +88,7 @@ typedef BD_DIR_H* (*BD_DIR_OPEN) (const char* dirname);
  * @return previous function pointer registered
  */
 /* deprecated - use bd_open_files() instead */
-BD_FILE_OPEN bd_register_file(BD_FILE_OPEN p);
+BD_PUBLIC BD_FILE_OPEN bd_register_file(BD_FILE_OPEN p);
 
 /**
  *
@@ -82,7 +98,7 @@ BD_FILE_OPEN bd_register_file(BD_FILE_OPEN p);
  * @return previous function pointer registered
  */
 /* deprecated - use bd_open_files() instead */
-BD_DIR_OPEN bd_register_dir(BD_DIR_OPEN p);
+BD_PUBLIC BD_DIR_OPEN bd_register_dir(BD_DIR_OPEN p);
 
 #ifdef __cplusplus
 }

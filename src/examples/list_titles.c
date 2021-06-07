@@ -17,12 +17,22 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "bluray.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
+#if !HAVE_OPTIOND
+#include "getopt.h"
+#endif
 
 #define OPTS "ahs:l"
 

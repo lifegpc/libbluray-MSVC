@@ -31,6 +31,10 @@
 #include "bdnav/meta_data.h"
 #include "bluray.h"
 
+#ifdef _MSC_VER
+#include <windows.h>
+#endif
+
 static const char *_yes_no(int i)
 {
     return i > 0 ? "yes" : i < 0 ? "unknown" : "no";
@@ -158,6 +162,9 @@ static void _print_app_info(const BLURAY_DISC_INFO *info)
 
 int main(int argc, char *argv[])
 {
+#ifdef _MSC_VER
+    SetConsoleOutputCP(CP_UTF8);
+#endif
     int major, minor, micro;
     const char *disc_root = (argc > 1) ? argv[1] : NULL;
     const char *keyfile   = (argc > 2) ? argv[2] : NULL;
